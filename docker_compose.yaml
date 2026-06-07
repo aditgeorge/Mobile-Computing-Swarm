@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build: ./orchestrator # Directory containing your Python script and Dockerfile
+    container_name: orchestrator_node
+    depends_on:
+      - phone_node_1
+      - phone_node_2
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+
+  phone_node_1:
+    image: ollama/ollama:latest
+    container_name: simulated_phone_1
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'  # Throttled to 1.5 cores
+          memory: 2G   # Restricted to 2GB RAM
+          
+  phone_node_2:
+    image: ollama/ollama:latest
+    container_name: simulated_phone_2
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'  # Throttled to 1.5 cores
+          memory: 2G   # Restricted to 2GB RAM
