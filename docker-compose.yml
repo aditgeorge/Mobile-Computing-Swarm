@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   orchestrator:
-    build: ./orchestrator # Directory containing your Python script and Dockerfile
+    build: ./ # Directory containing your Python script and Dockerfile
     container_name: orchestrator_node
     depends_on:
       - phone_node_1
