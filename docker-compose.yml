@@ -4,6 +4,8 @@ services:
   orchestrator:
     build: ./ # Directory containing your Python script and Dockerfile
     container_name: orchestrator_node
+    environment:                 # <-- ADD THIS BLOCK
+      - HF_TOKEN=${HF_TOKEN}
     depends_on:
       - phone_node_1
       - phone_node_2

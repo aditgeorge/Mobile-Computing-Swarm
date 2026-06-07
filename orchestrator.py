@@ -44,7 +44,7 @@ def main():
 
     print("\n--- DOWNLOADING BILLSUM DATASET ---")
     # Load the California test split of the BillSum dataset
-    dataset = load_dataset("billsum", split="ca_test")
+    dataset = load_dataset("FiscalNote/billsum", split="ca_test")
     
     # Grab the very first bill in the dataset
     sample_bill = dataset[0]
