@@ -70,3 +70,23 @@ def main():
         
         # Wait for both edge devices to return their summaries
         summary_1 = future_1.result()
+        summary_2 = future_2.result()
+
+    print("\n--- MAP PHASE COMPLETE ---")
+    print(f"Summary 1 Snippet: {summary_1[:100]}...")
+    print(f"Summary 2 Snippet: {summary_2[:100]}...")
+
+    # --- 3. THE REDUCE STEP ---
+    print("\n--- STARTING REDUCE PHASE (Recombination) ---")
+    combined_summaries = f"Summary Part 1:\n{summary_1}\n\nSummary Part 2:\n{summary_2}"
+    
+    # We send the combined summaries back to Phone 1 to generate the final master summary.
+    final_summary = summarize_chunk(phone_1, "Phone 1", combined_summaries, "Reduce")
+
+    print("\n==========================================")
+    print("           FINAL MASTER SUMMARY           ")
+    print("==========================================")
+    print(final_summary)
+
+if __name__ == "__main__":
+    main()
