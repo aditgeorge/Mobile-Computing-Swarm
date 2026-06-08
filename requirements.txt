@@ -1,5 +1,6 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 ollama==0.4.4
 requests==2.32.3
 datasets
 rouge-score==0.1.2
-bert-score
+# bert-score

@@ -4,7 +4,7 @@ from ollama import Client
 from datasets import load_dataset
 import re
 from rouge_score import rouge_scorer
-from bert_score import score
+# from bert_score import score
 
 # 1. Define all three nodes
 orch_llm = Client(host='http://orchestrator_llm:11434')
@@ -159,16 +159,16 @@ def main():
     print(f"ROUGE-2 (Phrase Match): {scores['rouge2'].fmeasure * 100:.2f}%")
     print(f"ROUGE-L (Structure):    {scores['rougeL'].fmeasure * 100:.2f}%")
 
-    # BERTScore expects lists of strings
-    candidates = [final_summary]
-    references = [ground_truth_summary]
+    # # BERTScore expects lists of strings
+    # candidates = [final_summary]
+    # references = [ground_truth_summary]
     
-    # Calculate scores (lang="en" forces it to use the optimized English model)
-    P, R, F1 = score(candidates, references, lang="en", verbose=False)
+    # # Calculate scores (lang="en" forces it to use the optimized English model)
+    # P, R, F1 = score(candidates, references, lang="en", verbose=False)
     
-    print(f"Precision: {P.mean().item() * 100:.2f}% (How much of the AI summary is relevant)")
-    print(f"Recall:    {R.mean().item() * 100:.2f}% (How much of the Human summary was captured)")
-    print(f"F1 Score:  {F1.mean().item() * 100:.2f}% (The overall harmonic balance)")
+    # print(f"Precision: {P.mean().item() * 100:.2f}% (How much of the AI summary is relevant)")
+    # print(f"Recall:    {R.mean().item() * 100:.2f}% (How much of the Human summary was captured)")
+    # print(f"F1 Score:  {F1.mean().item() * 100:.2f}% (The overall harmonic balance)")
 
 if __name__ == "__main__":
     main()

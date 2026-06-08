@@ -39,4 +39,9 @@ docker compose ps
 docker compose logs -f orchestrator_logic
 ```
 
+### Stats of containers
+```bash
+docker stats
+```
+
 Using hugging face auth token so you might need a new one in case of issues
