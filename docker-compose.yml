@@ -7,7 +7,7 @@ services:
     environment:               
       - HF_TOKEN=${HF_TOKEN}
     volumes:
-      - ./cache_hf:/home/orchestrator_user/.cache/huggingface
+      - ./cache/cache_logic_driver:/home/orchestrator_user/.cache/huggingface
     depends_on:
       - orchestrator_llm
       - phone_node_1
@@ -18,7 +18,7 @@ services:
     image: ollama/ollama:latest
     container_name: orchestrator_llm
     volumes:
-      - ./cache_orchestrator:/root/.ollama
+      - ./cache/cache_orchestrator:/root/.ollama
     deploy:
       resources:
         limits:
@@ -30,7 +30,7 @@ services:
     image: ollama/ollama:latest
     container_name: simulated_phone_1
     volumes:
-      - ./cache_phone1:/root/.ollama
+      - ./cache/cache_phone1:/root/.ollama
     deploy:
       resources:
         limits:
@@ -41,7 +41,7 @@ services:
     image: ollama/ollama:latest
     container_name: simulated_phone_2
     volumes:
-      - ./cache_phone2:/root/.ollama
+      - ./cache/cache_phone2:/root/.ollama
     deploy:
       resources:
         limits:

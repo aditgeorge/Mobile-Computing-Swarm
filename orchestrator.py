@@ -2,6 +2,7 @@ import concurrent.futures
 import time
 from ollama import Client
 from datasets import load_dataset
+import re
 
 # 1. Define all three nodes
 orch_llm = Client(host='http://orchestrator_llm:11434')
@@ -10,6 +11,24 @@ phone_2 = Client(host='http://phone_node_2:11434')
 
 # Use a highly quantized, small model suitable for 2GB RAM limits
 MODEL_NAME = 'llama3.2:1b' 
+
+def find_sentence_break(text, ideal_index):
+    """
+    Finds the nearest sentence boundary after the ideal splitting index.
+    Prevents the LLM from receiving cut-off words or incomplete sentences.
+    """
+    if ideal_index >= len(text):
+        return len(text)
+        
+    # Search for a period, exclamation, or question mark followed by a space or newline
+    match = re.search(r'[.!?](?:\s|\n)', text[ideal_index:])
+    
+    if match:
+        # Return the exact index just after the punctuation mark
+        return ideal_index + match.end() - 1 
+    
+    # If no more punctuation is found, just return the end of the text
+    return len(text)
 
 def setup_node(client, node_name):
     """Ensures the LLM is downloaded to the simulated phone before starting."""
@@ -55,12 +74,35 @@ def main():
     
     print(f"Loaded a legal bill with {len(large_document)} characters.")
 
-    # --- 1. CHUNKING (Now in 3 parts) ---
-    # Divide the document into thirds
-    third = len(large_document) // 3
-    chunk_1 = large_document[:third]
-    chunk_2 = large_document[third:third*2]
-    chunk_3 = large_document[third*2:]
+    # --- 1. CHUNKING (Proportional & Sentence-Aware) ---
+    print("\n--- CALCULATING PROPORTIONAL CHUNKS ---")
+    
+    node_capacities = {
+        "Orchestrator LLM": 4.0,
+        "Phone 1": 1.5,
+        "Phone 2": 1.5
+    }
+    
+    total_cpu = sum(node_capacities.values())
+    total_chars = len(large_document)
+
+    # 1. Calculate the ideal mathematical splits
+    orch_ideal_size = int(total_chars * (node_capacities["Orchestrator LLM"] / total_cpu))
+    phone_1_ideal_size = int(total_chars * (node_capacities["Phone 1"] / total_cpu))
+    
+    # 2. Adjust splits to the nearest sentence boundary
+    orch_actual_split = find_sentence_break(large_document, orch_ideal_size)
+    phone_1_actual_split = find_sentence_break(large_document, orch_actual_split + phone_1_ideal_size)
+
+    # 3. Slice the text cleanly
+    chunk_1 = large_document[:orch_actual_split]
+    chunk_2 = large_document[orch_actual_split : phone_1_actual_split]
+    chunk_3 = large_document[phone_1_actual_split:] 
+    
+    print(f"Total Text Length: {total_chars} characters")
+    print(f"Orchestrator chunk: {len(chunk_1)} chars (Ends cleanly: '{chunk_1[-15:].strip()}')")
+    print(f"Phone 1 chunk: {len(chunk_2)} chars (Ends cleanly: '{chunk_2[-15:].strip()}')")
+    print(f"Phone 2 chunk: {len(chunk_3)} chars")
 
     print("\n--- STARTING MAP PHASE (Parallel Execution) ---")
     

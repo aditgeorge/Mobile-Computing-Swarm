@@ -36,7 +36,7 @@ docker compose ps
 
 ### To see the logs only from the main node
 ```bash
-docker compose logs -f orchestrator
+docker compose logs -f orchestrator_logic
 ```
 
 Using hugging face auth token so you might need a new one in case of issues
