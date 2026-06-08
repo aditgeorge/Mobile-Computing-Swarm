@@ -3,6 +3,8 @@ import time
 from ollama import Client
 from datasets import load_dataset
 import re
+from rouge_score import rouge_scorer
+from bert_score import score
 
 # 1. Define all three nodes
 orch_llm = Client(host='http://orchestrator_llm:11434')
@@ -68,10 +70,13 @@ def main():
     
     # Grab the very first bill in the dataset
     sample_bill = dataset[0]
-    
+
     # The 'text' column contains the full legal text of the bill
     large_document = sample_bill['text']
     
+    # the ground truth summary
+    ground_truth_summary = sample_bill['summary']
+
     print(f"Loaded a legal bill with {len(large_document)} characters.")
 
     # --- 1. CHUNKING (Proportional & Sentence-Aware) ---
@@ -138,6 +143,32 @@ def main():
     print("           FINAL MASTER SUMMARY           ")
     print("==========================================")
     print(final_summary)
+
+    print("\n==========================================")
+    print("             EVALUATION METRICS           ")
+    print("==========================================")
+    
+    # Initialize the ROUGE scorer
+    scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+    
+    # Compare the LLM's final summary against the human ground truth
+    scores = scorer.score(ground_truth_summary, final_summary)
+    
+    # Print the F1 scores (which balance precision and recall)
+    print(f"ROUGE-1 (Word Match):  {scores['rouge1'].fmeasure * 100:.2f}%")
+    print(f"ROUGE-2 (Phrase Match): {scores['rouge2'].fmeasure * 100:.2f}%")
+    print(f"ROUGE-L (Structure):    {scores['rougeL'].fmeasure * 100:.2f}%")
+
+    # BERTScore expects lists of strings
+    candidates = [final_summary]
+    references = [ground_truth_summary]
+    
+    # Calculate scores (lang="en" forces it to use the optimized English model)
+    P, R, F1 = score(candidates, references, lang="en", verbose=False)
+    
+    print(f"Precision: {P.mean().item() * 100:.2f}% (How much of the AI summary is relevant)")
+    print(f"Recall:    {R.mean().item() * 100:.2f}% (How much of the Human summary was captured)")
+    print(f"F1 Score:  {F1.mean().item() * 100:.2f}% (The overall harmonic balance)")
 
 if __name__ == "__main__":
     main()
