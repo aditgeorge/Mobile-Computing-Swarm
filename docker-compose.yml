@@ -1,34 +1,49 @@
 version: '3.8'
 
 services:
-  orchestrator:
-    build: ./ # Directory containing your Python script and Dockerfile
-    container_name: orchestrator_node
-    environment:                 # <-- ADD THIS BLOCK
+  orchestrator_logic:
+    build: ./ 
+    container_name: orchestrator_logic
+    environment:               
       - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./cache_hf:/home/orchestrator_user/.cache/huggingface
     depends_on:
+      - orchestrator_llm
       - phone_node_1
       - phone_node_2
+
+  # The "Brawn": The Orchestrator's personal, high-power LLM
+  orchestrator_llm:
+    image: ollama/ollama:latest
+    container_name: orchestrator_llm
+    volumes:
+      - ./cache_orchestrator:/root/.ollama
     deploy:
       resources:
         limits:
-          cpus: '4.0'
-          memory: 8G
+          cpus: '4.0'   # Fast processing
+          memory: 8G    # Lots of RAM
 
+  # The Edge Devices
   phone_node_1:
     image: ollama/ollama:latest
     container_name: simulated_phone_1
+    volumes:
+      - ./cache_phone1:/root/.ollama
     deploy:
       resources:
         limits:
-          cpus: '1.5'  # Throttled to 1.5 cores
-          memory: 2G   # Restricted to 2GB RAM
+          cpus: '1.5'   # Throttled
+          memory: 2G
           
   phone_node_2:
     image: ollama/ollama:latest
     container_name: simulated_phone_2
+    volumes:
+      - ./cache_phone2:/root/.ollama
     deploy:
       resources:
         limits:
-          cpus: '1.5'  # Throttled to 1.5 cores
-          memory: 2G   # Restricted to 2GB RAM
+          cpus: '1.5'   # Throttled
+          memory: 2G
