@@ -10,7 +10,7 @@ from rouge_score import rouge_scorer
 
 # Flexible criteria
 MODEL_NAME = 'llama3.2:1b' 
-total_rows_to_process = 1
+total_rows_to_process = 500
 node_capacities = {"Orchestrator LLM": 4.0, "Phone 1": 1.5, "Phone 2": 1.5}
 hf_dataset_name = "FiscalNote/billsum"
 hf_dataset_split = "ca_test"
