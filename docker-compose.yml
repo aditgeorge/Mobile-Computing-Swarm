@@ -8,6 +8,7 @@ services:
       - HF_TOKEN=${HF_TOKEN}
     volumes:
       - ./cache/cache_logic_driver:/home/orchestrator_user/.cache/huggingface
+      - ./outputs:/app/outputs
     depends_on:
       - orchestrator_llm
       - phone_node_1
