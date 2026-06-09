@@ -51,3 +51,16 @@ Run docker compose for the execution, in parallel in another window run the dock
 ```bash
 python monitor.py
 ```
+
+Linux Commands:
+```bash
+service docker start
+```
+
+```bash
+service docker status
+```
+
+```bash
+service docker stop
+```
