@@ -45,3 +45,9 @@ docker stats
 ```
 
 Using hugging face auth token so you might need a new one in case of issues
+
+
+Run docker compose for the execution, in parallel in another window run the docker memory tracker
+```bash
+python monitor.py
+```

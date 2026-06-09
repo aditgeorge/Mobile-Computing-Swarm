@@ -2,3 +2,5 @@ venv/
 .env
 cache_*/
 cache/
+outputs/
+docker_telemetry.csv

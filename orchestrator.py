@@ -15,12 +15,10 @@ node_capacities = {"Orchestrator LLM": 4.0, "Phone 1": 1.5, "Phone 2": 1.5}
 hf_dataset_name = "FiscalNote/billsum"
 hf_dataset_split = "ca_test"
 
-
 # Define connection endpoints
 orch_llm = Client(host='http://orchestrator_llm:11434')
 phone_1 = Client(host='http://phone_node_1:11434')
 phone_2 = Client(host='http://phone_node_2:11434')
-
 
 def find_sentence_break(text, ideal_index):
     if ideal_index >= len(text):
@@ -33,6 +31,7 @@ def find_sentence_break(text, ideal_index):
 def setup_node(client, node_name):
     print(f"[{node_name}] Checking for model '{MODEL_NAME}'...")
     try:
+        print(f"[{node_name}] pulling model....")
         client.pull(MODEL_NAME)
         print(f"[{node_name}] Model ready.")
     except Exception as e:
@@ -78,10 +77,16 @@ def summarize_chunk(client, node_name, text_chunk, task_type="Map"):
         return {"text": "[ERROR]", "metrics": {"ttft": 0, "tps": 0, "total_time": 0}}
 
 def main():
-    print("--- INITIALIZING ALL NODES ---")
-    setup_node(orch_llm, "Orchestrator LLM")
-    setup_node(phone_1, "Phone 1")
-    setup_node(phone_2, "Phone 2")
+    print("--- INITIALIZING ALL NODES IN PARALLEL ---")
+    
+    # NEW: Parallelizing the model pull requests
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_setup_orch = executor.submit(setup_node, orch_llm, "Orchestrator LLM")
+        future_setup_1 = executor.submit(setup_node, phone_1, "Phone 1")
+        future_setup_2 = executor.submit(setup_node, phone_2, "Phone 2")
+        
+        # Wait for all three nodes to finish pulling before moving on to the dataset
+        concurrent.futures.wait([future_setup_orch, future_setup_1, future_setup_2])
 
     print("\n--- DOWNLOADING BILLSUM DATASET ---")
     dataset = load_dataset(hf_dataset_name, split=hf_dataset_split)
@@ -92,9 +97,8 @@ def main():
     output_file = os.path.join(output_dir, "evaluation_results.csv")
     os.makedirs(output_dir, exist_ok=True)
     
-    # Define comprehensive table tracking structure
     headers = [
-        "Timestamp", "Testcase_ID", 
+        "Row_Start_Unix", "Row_End_Unix", "Readable_Time", "Testcase_ID", 
         "ROUGE_1", "ROUGE_2", "ROUGE_L", 
         "Orch_Map_TTFT", "Orch_Map_TPS",
         "Phone1_Map_TTFT", "Phone1_Map_TPS",
@@ -112,7 +116,8 @@ def main():
     
     for testcase_index in range(total_rows_to_process):
         print(f"\n--- [ROW {testcase_index + 1} / {total_rows_to_process}] ---")
-        pipeline_start = time.time()
+        
+        pipeline_start = time.time() 
         
         try:
             sample_bill = dataset[testcase_index]
@@ -154,13 +159,16 @@ def main():
             r2 = r_scores['rouge2'].fmeasure * 100
             rl = r_scores['rougeL'].fmeasure * 100
 
-            pipeline_total_time = time.time() - pipeline_start
+            pipeline_end = time.time()
+            pipeline_total_time = pipeline_end - pipeline_start
             print(f"Success! R1: {r1:.2f}% | Total Time: {pipeline_total_time:.2f}s")
 
             # --- WRITE RESULTS TO CSV ---
             with open(output_file, mode='a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerow([
+                    pipeline_start,
+                    pipeline_end,
                     time.strftime("%Y-%m-%d %H:%M:%S"),
                     testcase_index,
                     f"{r1:.2f}%", f"{r2:.2f}%", f"{rl:.2f}%",
@@ -174,10 +182,17 @@ def main():
 
         except Exception as e:
             print(f"🚨 FATAL ERROR ON ROW {testcase_index}: {e}")
+            pipeline_end = time.time() 
+            
             with open(output_file, mode='a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                # Create a placeholder row matching the exact number of header columns
-                error_row = [time.strftime("%Y-%m-%d %H:%M:%S"), testcase_index] + ["ERROR"] * 12 + [f"Failed: {e}"]
+                error_row = [
+                    pipeline_start, 
+                    pipeline_end, 
+                    time.strftime("%Y-%m-%d %H:%M:%S"), 
+                    testcase_index
+                ] + ["ERROR"] * 12 + [f"Failed: {e}"]
+                
                 writer.writerow(error_row)
             continue 
 
