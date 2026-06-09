@@ -16,7 +16,7 @@ docker compose up -d
 
 ### Destroy containers
 ```bash
-docker compose down
+docker compose down && rm -rf cache/ && rm -rf outputs
 ```
 
 ### Just stop

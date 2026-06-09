@@ -10,7 +10,7 @@ def main():
     # Ensure these exactly match your container names in docker-compose.yml
     target_containers = ['orchestrator_llm', 'simulated_phone_1', 'simulated_phone_2']
     
-    output_file = "docker_telemetry.csv"
+    output_file = "./outputs/docker_telemetry.csv"
     file_exists = os.path.isfile(output_file)
     
     with open(output_file, mode='a', newline='') as f:

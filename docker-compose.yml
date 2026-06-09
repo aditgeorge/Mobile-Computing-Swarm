@@ -9,6 +9,7 @@ services:
     volumes:
       - ./cache/cache_logic_driver:/home/orchestrator_user/.cache/huggingface
       - ./outputs:/app/outputs
+      - ./orchestrator.py:/app/orchestrator.py
     depends_on:
       - orchestrator_llm
       - phone_node_1

@@ -28,14 +28,24 @@ def find_sentence_break(text, ideal_index):
         return ideal_index + match.end() - 1 
     return len(text)
 
-def setup_node(client, node_name):
-    print(f"[{node_name}] Checking for model '{MODEL_NAME}'...")
-    try:
-        print(f"[{node_name}] pulling model....")
-        client.pull(MODEL_NAME)
-        print(f"[{node_name}] Model ready.")
-    except Exception as e:
-        print(f"[{node_name}] Failed to reach node. Error: {e}")
+def setup_node(client, node_name, max_retries=3):
+    print(f"[{node_name}] pulling model....", end="", flush=True)
+    
+    for attempt in range(max_retries):
+        try:
+            # Attempt to download the model
+            client.pull(MODEL_NAME)
+            print(" Done!")
+            return True
+        except Exception as e:
+            if attempt < max_retries - 1:
+                # If it fails, print a warning and wait 5 seconds before trying again
+                print(f"\n⚠️ [{node_name}] Network timeout. Retrying ({attempt + 1}/{max_retries})....", end="", flush=True)
+                time.sleep(5)
+            else:
+                # If it fails 3 times, throw the fatal error
+                print(f"\n🚨 [{node_name}] Failed to reach node after {max_retries} attempts. Error: {e}")
+                return False
 
 def summarize_chunk(client, node_name, text_chunk, task_type="Map"):
     messages = [
